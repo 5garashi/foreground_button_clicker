@@ -1,0 +1,21 @@
+{
+  "title_contains": "",
+  "interval_seconds": 0.5,
+  "cooldown_seconds": 2.0,
+  "dry_run": false,
+  "tracking_mode": true,
+  "rules": [
+    {
+      "priority": 1,
+      "text": "常に許可",
+      "match": "prefix",
+      "enabled": true
+    },
+    {
+      "priority": 2,
+      "text": "一度だけ許可",
+      "match": "prefix",
+      "enabled": true
+    }
+  ]
+}

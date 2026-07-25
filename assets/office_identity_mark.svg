@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 450">
+  <title>5garashi.com設計事務所 シンプル版シンボルマーク</title>
+  <g fill="#B92613">
+    <path transform="translate(165,235) rotate(8)" d="M0,-190 C22,-126 22,126 0,190 C-22,126 -22,-126 0,-190 Z"/>
+    <path transform="translate(245,235) rotate(8)" d="M0,-190 C22,-126 22,126 0,190 C-22,126 -22,-126 0,-190 Z"/>
+    <path transform="translate(325,235) rotate(8)" d="M0,-190 C22,-126 22,126 0,190 C-22,126 -22,-126 0,-190 Z"/>
+    <path transform="translate(405,235) rotate(8)" d="M0,-190 C22,-126 22,126 0,190 C-22,126 -22,-126 0,-190 Z"/>
+    <path transform="translate(280,180) rotate(-4)" d="M-248,0 C-160,-27 160,-27 248,0 C160,27 -160,27 -248,0 Z"/>
+  </g>
+</svg>

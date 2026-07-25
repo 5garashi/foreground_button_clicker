@@ -1,0 +1,2 @@
+pywinauto>=0.6.8,<0.7
+uiautomation==2.0.29

@@ -372,6 +372,8 @@ class ButtonClickerApp:
             value="通常モード：最前面ウィンドウを監視"
         )
         self.status_var = tk.StringVar(value="停止中")
+        self.rule_list_window: tk.Toplevel | None = None
+        self.rule_list_tree: ttk.Treeview | None = None
 
         self._build_ui()
         self._refresh_rules()
@@ -678,27 +680,8 @@ class ButtonClickerApp:
         )
         rule_frame.pack(fill="both", expand=True, pady=(14, 0))
 
-        columns = ("priority", "text", "match", "enabled")
-        self.tree = ttk.Treeview(
-            rule_frame,
-            columns=columns,
-            show="headings",
-            height=4,
-            selectmode="browse",
-        )
-        self.tree.heading("priority", text="優先順位")
-        self.tree.heading("text", text="ボタン文字")
-        self.tree.heading("match", text="照合方法")
-        self.tree.heading("enabled", text="状態")
-        self.tree.column("priority", width=90, anchor="center", stretch=False)
-        self.tree.column("text", width=320, anchor="w")
-        self.tree.column("match", width=120, anchor="center", stretch=False)
-        self.tree.column("enabled", width=90, anchor="center", stretch=False)
-        self.tree.pack(fill="both", expand=True)
-        self.tree.bind("<Double-1>", lambda _event: self._edit_rule())
-
         rule_buttons = ttk.Frame(rule_frame, style="Card.TFrame")
-        rule_buttons.pack(fill="x", pady=(10, 0))
+        rule_buttons.pack(fill="x", pady=(0, 10))
         office_button(
             rule_buttons,
             text="追加",
@@ -720,10 +703,35 @@ class ButtonClickerApp:
         ).pack(side="left", padx=(8, 0))
         office_button(
             rule_buttons,
+            text="一覧を表示",
+            command=self._open_rule_list,
+            width=12,
+        ).pack(side="left", padx=(8, 0))
+        office_button(
+            rule_buttons,
             text="初期設定に戻す",
             command=self._restore_defaults,
             width=14,
         ).pack(side="right")
+
+        columns = ("priority", "text", "match", "enabled")
+        self.tree = ttk.Treeview(
+            rule_frame,
+            columns=columns,
+            show="headings",
+            height=4,
+            selectmode="browse",
+        )
+        self.tree.heading("priority", text="優先順位")
+        self.tree.heading("text", text="ボタン文字")
+        self.tree.heading("match", text="照合方法")
+        self.tree.heading("enabled", text="状態")
+        self.tree.column("priority", width=90, anchor="center", stretch=False)
+        self.tree.column("text", width=320, anchor="w")
+        self.tree.column("match", width=120, anchor="center", stretch=False)
+        self.tree.column("enabled", width=90, anchor="center", stretch=False)
+        self.tree.pack(fill="both", expand=True)
+        self.tree.bind("<Double-1>", lambda _event: self._edit_rule())
 
         # Keep the primary controls outside the vertically flexible content.
         # On short displays, packing this row inside ``outer`` allowed the
@@ -830,12 +838,99 @@ class ButtonClickerApp:
                 "通常モード：最前面ウィンドウを監視"
             )
 
+    def _sorted_rules(self) -> list[Rule]:
+        return sorted(self.rules, key=lambda item: (item.priority, item.text))
+
+    def _refresh_rule_list_tree(self) -> None:
+        if (
+            self.rule_list_window is None
+            or self.rule_list_tree is None
+            or not self.rule_list_window.winfo_exists()
+        ):
+            return
+        selected = self.rule_list_tree.selection()
+        self.rule_list_tree.delete(*self.rule_list_tree.get_children())
+        for index, rule in enumerate(self._sorted_rules()):
+            self.rule_list_tree.insert(
+                "",
+                "end",
+                iid=str(index),
+                values=(
+                    rule.priority,
+                    rule.text,
+                    MATCH_LABELS[rule.match],
+                    "有効" if rule.enabled else "無効",
+                ),
+            )
+        if selected and self.rule_list_tree.exists(selected[0]):
+            self.rule_list_tree.selection_set(selected[0])
+
+    def _close_rule_list(self) -> None:
+        if self.rule_list_window is not None and self.rule_list_window.winfo_exists():
+            self.rule_list_window.destroy()
+        self.rule_list_window = None
+        self.rule_list_tree = None
+
+    def _open_rule_list(self) -> None:
+        if self.rule_list_window is not None and self.rule_list_window.winfo_exists():
+            self.rule_list_window.deiconify()
+            self.rule_list_window.lift()
+            self.rule_list_window.focus_force()
+            self._refresh_rule_list_tree()
+            return
+
+        window = tk.Toplevel(self.root)
+        window.title("登録ボタン一覧")
+        window.geometry("760x420")
+        window.minsize(680, 300)
+        window.configure(background=PAPER)
+        window.transient(self.root)
+        window.protocol("WM_DELETE_WINDOW", self._close_rule_list)
+        self.rule_list_window = window
+
+        frame = ttk.Frame(window, padding=12)
+        frame.pack(fill="both", expand=True)
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(0, weight=1)
+
+        columns = ("priority", "text", "match", "enabled")
+        tree = ttk.Treeview(
+            frame,
+            columns=columns,
+            show="headings",
+            height=12,
+            selectmode="browse",
+        )
+        tree.heading("priority", text="優先順位")
+        tree.heading("text", text="ボタン文字")
+        tree.heading("match", text="照合方法")
+        tree.heading("enabled", text="状態")
+        tree.column("priority", width=90, anchor="center", stretch=False)
+        tree.column("text", width=420, anchor="w")
+        tree.column("match", width=120, anchor="center", stretch=False)
+        tree.column("enabled", width=90, anchor="center", stretch=False)
+        tree.grid(row=0, column=0, sticky="nsew")
+
+        scroll = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scroll.set)
+        scroll.grid(row=0, column=1, sticky="ns")
+
+        footer = ttk.Frame(frame)
+        footer.grid(row=1, column=0, columnspan=2, sticky="e", pady=(10, 0))
+        office_button(
+            footer,
+            text="閉じる",
+            command=self._close_rule_list,
+            width=10,
+        ).pack(side="right")
+
+        self.rule_list_tree = tree
+        self._refresh_rule_list_tree()
+
     def _refresh_rules(self) -> None:
         selected = self.tree.selection()
         self.tree.delete(*self.tree.get_children())
-        for index, rule in enumerate(
-            sorted(self.rules, key=lambda item: (item.priority, item.text))
-        ):
+        for index, rule in enumerate(self._sorted_rules()):
             self.tree.insert(
                 "",
                 "end",
@@ -849,13 +944,14 @@ class ButtonClickerApp:
             )
         if selected and self.tree.exists(selected[0]):
             self.tree.selection_set(selected[0])
+        self._refresh_rule_list_tree()
 
     def _selected_rule(self) -> tuple[int, Rule] | None:
         selected = self.tree.selection()
         if not selected:
             messagebox.showinfo("選択してください", "対象の行を選択してください。")
             return None
-        sorted_rules = sorted(self.rules, key=lambda item: (item.priority, item.text))
+        sorted_rules = self._sorted_rules()
         index = int(selected[0])
         return index, sorted_rules[index]
 
@@ -1421,6 +1517,7 @@ class ButtonClickerApp:
 
     def _on_close(self) -> None:
         self.stop_event.set()
+        self._close_rule_list()
         self._save_current_config()
         self.root.destroy()
 

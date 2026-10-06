@@ -8,3 +8,7 @@ __pycache__/
 .venv/
 env/
 
+
+# 実行時の記録（画面タイトル・クリック内容を含むため公開しない）
+runtime_log.txt
+startup_log.txt

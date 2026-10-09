@@ -1,180 +1,215 @@
-# 最前面ボタン自動クリック v1.2.0
+<!--
+File: README.md
+Summary: Japanese and English usage guide for Foreground Button Clicker.
+Author: 5garashi.com設計事務所 / 5garashi.com Design Office
+Created: 2026-07-24
+License: Not specified
+SPDX-License-Identifier: NOASSERTION
+-->
 
-Windows 10／11で、最前面ウィンドウまたは固定した追跡対象ウィンドウに
-登録した文字のボタンが表示されたとき、優先順位が最も高いボタンを
-検出・クリックするプログラムです。
+# 最前面ボタン自動クリック / Foreground Button Clicker v1.3.0
 
-初期状態では次の2件が登録されています。
+## 日本語
 
-| 優先順位 | ボタン文字 | 照合方法 |
-|---:|---|---|
-| 1 | 常に許可 | 前方一致 |
-| 2 | 一度だけ許可 | 前方一致 |
+Windows 10／11で、最前面ウィンドウまたは固定した追跡対象ウィンドウから
+登録した文字に一致するUI要素を検出し、優先順位に従ってクリックするプログラムです。
+初期設定では、クリック前に「検出だけ」で動作を確認できます。
 
-「常に許可」と「一度だけ許可」が同時に表示された場合は、
-優先順位1の「常に許可」をクリックします。
+### 起動方法
 
-「前方一致」にしているため、画面上でボタン名が
-「常に許可 2」「一度だけ許可 3 Ctrl+Enter」と取得されても検出できます。
-
-## デザイン
-
-画面デザインには `5garashi_identity_v4_6.html` の Office Identity を
-反映しています。
-
-- 背景：paper `#F9EFCB`
-- ヘッダー：head `#FFE699`
-- 本文・主要ボタン：ink `#385723`
-- 補助文字：steel `#7B4A21`
-- シンボル・アクセント：volt `#B92613`
-- 警告：volt-deep `#8C1B0D`
-- カード：card `#FFFDF2`
-- 区切り：line `#DFCF9A`
-- 完了・動作中：ok `#3E6B2A`
-
-ヘッダーにはOffice Identityの正式なシンプル版シンボルマークを、
-形状と色を変更せず使用しています。赤は警告・削除・バージョン表示など、
-意味のある箇所に限定しています。
-
-文字サイズ、コントラスト、状態の文字表示、操作ボタンの大きさなどは、
-ユニバーサルデザインを考慮しています。
-
-v1.1.1では、縦幅が小さい画面でも［監視を開始］と［停止］の文字が
-欠けないよう、操作行を常に表示される固定フッターに変更しました。
-
-v1.1.2では同じ文字欠け対策を全ボタンへ水平展開し、
-［追加］［編集］［削除］［初期設定に戻す］および設定ダイアログ内の
-［キャンセル］［保存］にも共通の縦余白を適用しました。
-
-v1.1.3では、Windowsの一部の表示倍率で文字描画が欠ける `ttk` ボタンを
-画面全体から廃止し、全8ボタンを通常のTkボタンへ置き換えました。
-
-v1.1.4では、全ボタンに塗り、明確な外枠、立体的な押下表現を追加しました。
-通常操作は黄色、削除は赤系、監視開始は緑で役割を見分けられます。
-
-v1.2.0では「ウィンドウ追跡モード」を追加しました。監視開始後、
-次に最前面へ出した別アプリのウィンドウを記憶し、そのタイトルを表示します。
-固定後は対象が最前面でなくても、そのウィンドウだけを監視します。
-
-## 起動方法
-
-1. ZIPファイルを右クリックして、必ず［すべて展開］します。
-2. 展開したフォルダー内の `START_BUTTON_CLICKER.cmd` をダブルクリックします。
+1. ZIPファイルを右クリックして［すべて展開］します。ZIP内から直接起動しないでください。
+2. `START_BUTTON_CLICKER.cmd` をダブルクリックします。
 3. 初回だけ、必要なPythonライブラリがインストールされます。
-4. 設定画面が開いたら、［監視を開始］を押します。
-5. 許可確認画面を最前面にします。
+4. 画面で表示言語を選び、［監視を開始］を押します。
 
-ZIP内のファイルを直接ダブルクリックしないでください。ZIP内から起動すると、
-同梱ファイルを読み込めず、起動できません。
+Python 3が必要です。PythonがPATHに登録されていない場合は、Pythonをインストールしてから
+再度起動してください。
 
-Python 3がインストールされていない場合は、先にPython 3をインストールしてください。
+### 起動時の言語指定
 
-## 最初の動作確認
+コマンドプロンプトから起動スクリプトに言語を渡すと、その起動だけ表示言語を指定できます。
 
-初期状態では［検出だけ（クリックしない）］が有効です。
+```text
+START_BUTTON_CLICKER.cmd --language ja
+START_BUTTON_CLICKER.cmd --language en
+```
 
-1. ［検出だけ（クリックしない）］を有効にしたまま監視を開始します。
-2. 対象の許可確認画面を最前面にします。
-3. 動作履歴に「検出：優先度1『常に許可…』」と表示されることを確認します。
-4. 監視を停止します。
-5. ［検出だけ（クリックしない）］を解除します。
-6. もう一度監視を開始します。
+Pythonを直接実行する場合も同じオプションを使えます。
 
-## ウィンドウ追跡モードの使い方
+```text
+py -3 foreground_button_clicker.py --language ja
+py -3 foreground_button_clicker.py --language en
+```
 
-1. ［ウィンドウ追跡モード］を有効にします。
-2. ［監視を開始］を押します。この時点では本ツールが最前面で構いません。
-3. 自動クリックしたいアプリを最前面にします。
-4. 同じウィンドウを2回連続で確認すると追跡対象として固定し、
-   ［追跡対象］欄と動作履歴にウィンドウタイトルを表示します。
-5. 以後は対象アプリが最前面でなくても、固定したウィンドウだけを監視します。
+`ja` は日本語、`en` は英語です。指定を省略すると、設定ファイルに保存された言語で起動します。
+起動オプションは保存済み言語より優先され、終了時に選択言語として保存されます。
+画面上の切替ボタンも設定言語を更新します。
+バージョンは `py -3 foreground_button_clicker.py --version` で確認できます。
 
-別のウィンドウへ変更する場合は、いったん［停止］し、再度
-［監視を開始］を押して対象アプリを選び直してください。
+### 画面の言語切替
 
-## 設定
+画面右上のボタンには、現在の表示言語とは反対の言語名が表示されます。
+日本語表示中は［English］、英語表示中は［日本語］を押して切り替えます。
 
-- 対象ウィンドウのタイトルを含む文字
-  - 空欄：すべての最前面ウィンドウを対象にします。
-  - 文字を入力：タイトルにその文字を含む最前面ウィンドウだけを対象にします。
-  - 追跡モードでは、最初に記憶するウィンドウ候補を絞り込みます。
-- ウィンドウ追跡モード
-  - ［監視を開始］を押した後、対象アプリを最前面にします。
-  - 最初に検出した本ツール以外のウィンドウを固定し、タイトルを表示します。
-  - 固定後は、対象アプリが背面でも同じウィンドウを監視し続けます。
-  - 対象ウィンドウを閉じると、監視を停止します。
-- 確認間隔
-  - 初期値は0.5秒です。
-- クリック後の待機
-  - 初期値は2秒です。同じ画面への連続クリックを抑えます。
-- 登録ボタン
-  - 追加、編集、削除ができます。
-  - 優先順位は、数字が小さいほど高くなります。
-- 照合方法
-  - 完全一致：ボタン名全体が同じ場合だけ一致します。
-  - 前方一致：ボタン名が登録文字から始まる場合に一致します。
-  - 部分一致：ボタン名の途中に登録文字が含まれる場合に一致します。
+### 最初の動作確認
 
-設定内容は、同じフォルダーの `button_clicker_config.json` に自動保存されます。
+1. 初期設定の［検出だけ（クリックしない）］を有効にしたまま監視を開始します。
+2. 対象の確認画面を最前面にします。
+3. 動作履歴に検出結果が表示されることを確認します。
+4. 監視を停止し、必要な場合だけ検出専用設定を解除して再開します。
 
-## 安全上の注意
+### ウィンドウ追跡モード
 
-「常に許可」は、その後の操作を確認なしで許可する設定になる可能性があります。
-意図しない命令まで許可しないよう、次の使い方を推奨します。
+1. ［ウィンドウ追跡モード］を有効にして監視を開始します。
+2. 対象アプリを最前面にします。同じウィンドウが連続して確認されると追跡対象に固定されます。
+3. 固定後は、対象アプリが背面にあっても、そのウィンドウだけを監視します。
 
-- 最初は必ず［検出だけ（クリックしない）］で確認する。
-- 必要に応じて、対象ウィンドウのタイトルを指定する。
-- 使用しないときは監視を停止する。
-- 信頼できる操作だけが実行されている状況で使用する。
+対象を変更するには監視を停止し、再度開始して別のウィンドウを選択します。
+追跡対象を閉じると監視は停止します。
 
-追跡対象が背面にある場合は、Windows UI AutomationのInvoke操作だけを
-使用します。対象ボタンがInvokeに対応していない場合は、手前の別アプリを
-誤クリックしないよう座標クリックへ切り替えず、その操作を中止します。
+### 設定
 
-## 検出できない場合
+- 対象ウィンドウのタイトルを含む文字：空欄ならすべての候補が対象です。入力するとタイトルで絞り込みます。
+- 確認間隔：監視する間隔です。初期値は0.5秒です。
+- クリック後の待機：同じ画面への連続クリックを抑えます。初期値は2秒です。
+- 登録ボタン：追加、編集、削除ができます。優先順位の数字が小さいルールから照合します。
+- 照合方法：
+  - 完全一致：ボタン名全体が登録文字と一致する場合に照合します。
+  - 前方一致：ボタン名が登録文字から始まる場合に照合します。
+  - 部分一致：ボタン名に登録文字が含まれる場合に照合します。
 
-このプログラムは、Windows UI Automationに公開されたボタン名を読み取ります。
-独自描画された画面など、ボタン文字がWindowsに公開されていない画面では検出できません。
+設定は `button_clicker_config.json` に自動保存されます。
+画面上で言語を切り替えると、`language` に `ja` または `en` が保存されます。
+起動時の `--language` オプションはその起動時の表示言語を指定します。
 
-まず、次を確認してください。
+### 安全上の注意
 
-1. 許可確認画面が最前面になっているか。
-2. ［監視を開始］を押しているか。
-3. 対象ウィンドウのタイトル条件が厳しすぎないか。
-4. 対象アプリと本プログラムの実行権限が同じか。
+「常に許可」などのボタンを自動クリックすると、後続の操作も確認なしに許可される場合があります。
+まず検出専用で動作を確認し、対象ウィンドウを必要に応じて限定してください。
+使わないときは監視を停止し、信頼できる操作に限って使用してください。
 
-対象アプリが管理者権限で動いている場合、本プログラムも右クリックして
-［管理者として実行］しないと操作できない場合があります。
+追跡対象が背面にある場合はWindows UI AutomationのInvoke操作だけを使います。
+対象ボタンがInvokeに対応しない場合は座標クリックへ切り替えず、操作を中止します。
+この動作により、手前にある別のウィンドウを誤クリックしないようにします。
 
-## 起動しない場合
+### 検出できない場合・起動しない場合
 
-`START_BUTTON_CLICKER.cmd` は、起動に失敗しても画面を閉じず、
-エラー内容を表示します。また、同じフォルダーに `startup_log.txt` を作成します。
+このプログラムはWindows UI Automationが公開するUI要素の名前を読み取ります。
+独自描画などにより名前が公開されない要素は検出できません。
+対象画面が最前面か、監視中か、ウィンドウタイトル条件が厳しすぎないか、
+対象アプリと同じ実行権限で起動しているかを確認してください。
 
-次を確認してください。
+起動に失敗した場合は、ZIPを展開したこと、`foreground_button_clicker.py` と
+`requirements.txt` があることを確認してください。起動ログは `startup_log.txt`、
+監視の履歴は `runtime_log.txt` に記録されます。
 
-1. ZIPを［すべて展開］したか。
-2. 展開後のフォルダー内に、次のファイルがすべてあるか。
-   - `START_BUTTON_CLICKER.cmd`
-   - `foreground_button_clicker.py`
-   - `requirements.txt`
-3. エラーが出た場合は、`startup_log.txt` の内容を確認する。
-
-監視開始後の解析結果は、画面の［動作履歴］と、同じフォルダーの
-`runtime_log.txt` に記録されます。v1.0.2以降は、Button型だけでなく、
-文字を持つすべてのUI要素を調べます。対象画面でボタンが別の種類として
-公開されていても、登録文字と一致すればクリックを試みます。
-
-## 対応範囲
+### 対応範囲
 
 - Windows 10／11
-- 通常のWindowsアプリ
-- Windows UI Automationに対応するブラウザ画面
+- Windows UI Automationに対応するWindowsアプリとブラウザー画面
 
-画面上の座標を固定してクリックする方式ではないため、
-ウィンドウの位置やサイズが多少変わっても、ボタン名を取得できれば動作します。
+## English
+
+Foreground Button Clicker detects UI elements whose names match your rules in the
+foreground window or a pinned tracking window, then clicks the highest-priority match.
+It runs on Windows 10 and Windows 11. Use “Detect only” first to verify matches without clicking.
+
+### Starting the program
+
+1. Right-click the ZIP file and select **Extract All**. Do not run the program from inside the ZIP.
+2. Double-click `START_BUTTON_CLICKER.cmd`.
+3. Required Python libraries are installed on the first launch.
+4. Choose the display language and select **Start monitoring**.
+
+Python 3 is required. If Python is not available on PATH, install Python and start the program again.
+
+### Choose the startup language
+
+Pass a language option to the startup script from Command Prompt to choose the interface language
+for that launch:
+
+```text
+START_BUTTON_CLICKER.cmd --language ja
+START_BUTTON_CLICKER.cmd --language en
+```
+
+The same option is available when running Python directly:
+
+```text
+py -3 foreground_button_clicker.py --language ja
+py -3 foreground_button_clicker.py --language en
+```
+
+Use `ja` for Japanese or `en` for English. If you omit the option, the program uses the language
+saved in its configuration file. The command-line choice takes precedence over the saved language
+and is saved as the preference when the program exits. The on-screen language button also updates
+the saved preference.
+Check the version with `py -3 foreground_button_clicker.py --version`.
+
+### Switch the interface language
+
+The button in the upper-right corner displays the language opposite to the current interface.
+When the interface is in Japanese, select **English**. When it is in English, select **日本語**.
+
+### First-run check
+
+1. Start monitoring with **Detect only (do not click)** enabled.
+2. Bring the target confirmation window to the foreground.
+3. Confirm that a detection result appears in the activity log.
+4. Stop monitoring. Disable detection-only mode and restart only if clicking is required.
+
+### Track a window
+
+1. Enable **Track a window** and start monitoring.
+2. Bring the target app to the foreground. The program pins it after observing the same window consecutively.
+3. Once pinned, the program monitors only that window, even when it is behind another window.
+
+To change the target, stop monitoring and start again before selecting another window.
+Monitoring stops if the tracked window closes.
+
+### Settings
+
+- **Text contained in the window title:** Leave blank to consider all candidate windows, or enter text to filter by title.
+- **Scan interval:** Time between scans; the default is 0.5 seconds.
+- **Cooldown after click:** Prevents repeated clicks on the same screen; the default is 2 seconds.
+- **Button rules:** Add, edit, or delete rules. Rules with smaller priority numbers are checked first.
+- **Match method:**
+  - **Exact:** The entire UI element name must match the rule text.
+  - **Starts with:** The UI element name must begin with the rule text.
+  - **Contains:** The UI element name must contain the rule text.
+
+Settings are saved automatically to `button_clicker_config.json`.
+Changing the interface language stores `ja` or `en` in the `language` setting.
+The startup `--language` option chooses the interface language for that launch.
+
+### Safety
+
+Automatically clicking buttons such as “Always allow” may authorize later actions without confirmation.
+Verify matches in detection-only mode first and, when appropriate, restrict the target window.
+Stop monitoring when it is not needed, and use automatic clicking only for trusted actions.
+
+When the tracked window is in the background, the program uses only the Windows UI Automation
+Invoke operation. If a target button does not support Invoke, the program stops that action instead
+of switching to coordinate clicking. This avoids accidentally clicking a different foreground window.
+
+### Troubleshooting
+
+The program reads UI element names exposed through Windows UI Automation. Elements with names hidden
+by custom drawing cannot be detected. Check that the target window is in the foreground, monitoring
+is running, the title filter is not too restrictive, and the program has the same execution privileges
+as the target app.
+
+If startup fails, confirm that the ZIP was extracted and that `foreground_button_clicker.py` and
+`requirements.txt` are present. Startup details are written to `startup_log.txt`; monitoring events
+are written to `runtime_log.txt`.
+
+### Supported environment
+
+- Windows 10 and Windows 11
+- Windows applications and browser windows that expose controls through Windows UI Automation
 
 ---
 
-**作成者**: 5garashi.com設計事務所  
-**最終更新**: 2026-07-24 JST
+**作成者 / Author**: 5garashi.com設計事務所 / 5garashi.com Design Office
+
+**最終更新 / Last updated**: 2026-10-10 JST

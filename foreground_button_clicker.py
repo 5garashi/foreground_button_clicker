@@ -1,5 +1,13 @@
+# File: foreground_button_clicker.py
+# Summary: Japanese/English foreground-window button monitor and clicker.
+# Author: 5garashi.com設計事務所 / 5garashi.com Design Office
+# Created: 2026-07-25
+# License: Not specified
+# SPDX-License-Identifier: NOASSERTION
+
 from __future__ import annotations
 
+import argparse
 import ctypes
 import json
 import os
@@ -18,7 +26,7 @@ from tkinter import messagebox, ttk
 
 
 APP_NAME = "最前面ボタン自動クリック"
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
 CONFIG_PATH = Path(__file__).with_name("button_clicker_config.json")
 RUNTIME_LOG_PATH = Path(__file__).with_name("runtime_log.txt")
 BRAND_MARK_PATH = Path(__file__).parent / "assets" / "office_identity_mark.png"
@@ -46,7 +54,131 @@ MATCH_LABELS = {
     "exact": "完全一致",
     "contains": "部分一致",
 }
-MATCH_KEYS = {label: key for key, label in MATCH_LABELS.items()}
+
+TRANSLATIONS = {
+    "最前面ボタン自動クリック": "Foreground Button Clicker",
+    "日本語": "日本語",
+    "最前面ウィンドウのボタンを優先順位順に検出します": (
+        "Detect buttons in the foreground window by priority."
+    ),
+    (
+        "注意：［常に許可］は、今後の操作も確認なしで許可する場合があります。"
+        "最初は「検出だけ」で確認してください。"
+    ): (
+        "Warning: “Always allow” may approve future actions without confirmation. "
+        "Start with “Detect only” to verify."
+    ),
+    "監視設定": "Monitoring settings",
+    "対象ウィンドウのタイトルを含む文字": "Text contained in the window title",
+    "空欄ならすべて（追跡時は取得候補を絞り込み）": (
+        "Blank = all windows; tracking mode filters candidates."
+    ),
+    "確認間隔［秒］": "Scan interval [seconds]",
+    "クリック後の待機［秒］": "Cooldown after click [seconds]",
+    "検出だけ（クリックしない）": "Detect only (do not click)",
+    "ウィンドウ追跡モード（監視開始後、次に最前面にしたアプリを固定）": (
+        "Track a window (after starting, bring the target app to the foreground)"
+    ),
+    "追跡対象": "Tracked window",
+    "登録ボタン": "Button rules",
+    "追加": "Add",
+    "編集": "Edit",
+    "削除": "Delete",
+    "一覧を表示": "Show list",
+    "初期設定に戻す": "Restore defaults",
+    "優先順位": "Priority",
+    "ボタン文字": "Button text",
+    "照合方法": "Match",
+    "状態": "Status",
+    "有効": "Enabled",
+    "無効": "Disabled",
+    "（タイトルなし）": "(untitled window)",
+    "ウィンドウ追跡モード": "window tracking mode",
+    "追跡対象を選択中": "Waiting to track",
+    "追跡中": "Tracking",
+    "監視中": "Monitoring",
+    "選択待ち：対象アプリを最前面にしてください": (
+        "Waiting: bring the target app to the foreground"
+    ),
+    "監視を開始": "Start monitoring",
+    "停止": "Stop",
+    "動作履歴": "Activity log",
+    "5garashi.com設計事務所　|　Office Identity v4.6": (
+        "5garashi.com Design Office | Office Identity v4.6"
+    ),
+    "登録ボタン一覧": "Button rules",
+    "閉じる": "Close",
+    "選択してください": "Select a rule",
+    "対象の行を選択してください。": "Select a row first.",
+    "ボタンを追加": "Add button rule",
+    "ボタンを編集": "Edit button rule",
+    "削除の確認": "Confirm deletion",
+    "初期設定に戻す": "Restore defaults",
+    "入力エラー": "Input error",
+    "設定エラー": "Settings error",
+    "優先順位（1が最優先）": "Priority (1 is highest)",
+    "ボタンに表示される文字": "Text shown on the button",
+    "このルールを有効にする": "Enable this rule",
+    "キャンセル": "Cancel",
+    "保存": "Save",
+    "優先順位は1～999の整数で入力してください。": (
+        "Enter a whole-number priority from 1 to 999."
+    ),
+    "ボタン文字を入力してください。": "Enter button text.",
+    "「常に許可」「一度だけ許可」": "“Always allow” and “Allow once”",
+    "「{text}」を削除しますか？": "Delete “{text}”?",
+    "登録ボタンを「常に許可」「一度だけ許可」に戻しますか？": (
+        "Restore the default “Always allow” and “Allow once” rules?"
+    ),
+    "確認間隔とクリック後の待機は数値で入力してください。": (
+        "Enter numbers for the scan interval and click cooldown."
+    ),
+    "確認間隔は0.2～60秒で入力してください。": (
+        "Enter a scan interval from 0.2 to 60 seconds."
+    ),
+    "クリック後の待機は0.5～600秒で入力してください。": (
+        "Enter a click cooldown from 0.5 to 600 seconds."
+    ),
+    "有効なボタンを1件以上登録してください。": (
+        "Add at least one enabled button rule."
+    ),
+    "Windows専用": "Windows only",
+    "このプログラムはWindows 10／11専用です。": (
+        "This program requires Windows 10 or 11."
+    ),
+    "必要な機能がありません": "Required component missing",
+    "uiautomationがインストールされていません。\n"
+    "「install_and_run.bat」から起動してください。": (
+        "The uiautomation package is not installed.\n"
+        "Start the program with “install_and_run.bat”."
+    ),
+    "停止中": "Stopped",
+    "検出だけ": "Detect only",
+    "自動クリック": "Auto-click",
+    "未選択（監視開始後、対象アプリを最前面にしてください）": (
+        "Not selected (bring the target app to the foreground after starting)"
+    ),
+    "通常モード：最前面ウィンドウを監視": (
+        "Normal mode: monitoring the foreground window"
+    ),
+    "選択待ち：対象アプリを最前面にしてください": (
+        "Waiting for selection: bring the target app to the foreground"
+    ),
+    "完全一致": "Exact",
+    "前方一致": "Starts with",
+    "部分一致": "Contains",
+}
+
+
+def translate(language: str, text: str) -> str:
+    if language != "en":
+        return text
+    return TRANSLATIONS.get(text, text)
+
+
+def match_label(match: str, language: str) -> str:
+    label = MATCH_LABELS[match]
+    return translate(language, label)
 
 
 @dataclass
@@ -225,9 +357,16 @@ def office_button(
 
 
 class RuleDialog(tk.Toplevel):
-    def __init__(self, parent: tk.Misc, title: str, rule: Rule | None = None):
+    def __init__(
+        self,
+        parent: tk.Misc,
+        title: str,
+        rule: Rule | None = None,
+        language: str = "ja",
+    ):
         super().__init__(parent)
-        self.title(title)
+        self.language = language
+        self.title(translate(language, title))
         self.resizable(False, False)
         self.transient(parent)
         self.result: Rule | None = None
@@ -235,14 +374,16 @@ class RuleDialog(tk.Toplevel):
         self.priority_var = tk.StringVar(value=str(rule.priority if rule else 1))
         self.text_var = tk.StringVar(value=rule.text if rule else "")
         self.match_var = tk.StringVar(
-            value=MATCH_LABELS.get(rule.match if rule else "prefix", "前方一致")
+            value=match_label(rule.match if rule else "prefix", language)
         )
         self.enabled_var = tk.BooleanVar(value=rule.enabled if rule else True)
 
         frame = ttk.Frame(self, padding=18)
         frame.grid(sticky="nsew")
 
-        ttk.Label(frame, text="優先順位（1が最優先）").grid(
+        ttk.Label(
+            frame, text=translate(language, "優先順位（1が最優先）")
+        ).grid(
             row=0, column=0, sticky="w", pady=(0, 6)
         )
         priority = ttk.Spinbox(
@@ -254,19 +395,21 @@ class RuleDialog(tk.Toplevel):
         )
         priority.grid(row=1, column=0, sticky="ew", pady=(0, 14))
 
-        ttk.Label(frame, text="ボタンに表示される文字").grid(
+        ttk.Label(
+            frame, text=translate(language, "ボタンに表示される文字")
+        ).grid(
             row=2, column=0, sticky="w", pady=(0, 6)
         )
         text_entry = ttk.Entry(frame, textvariable=self.text_var, width=38)
         text_entry.grid(row=3, column=0, sticky="ew", pady=(0, 14))
 
-        ttk.Label(frame, text="照合方法").grid(
+        ttk.Label(frame, text=translate(language, "照合方法")).grid(
             row=4, column=0, sticky="w", pady=(0, 6)
         )
         match = ttk.Combobox(
             frame,
             textvariable=self.match_var,
-            values=list(MATCH_KEYS),
+            values=[match_label(key, language) for key in MATCH_LABELS],
             state="readonly",
             width=18,
         )
@@ -274,7 +417,7 @@ class RuleDialog(tk.Toplevel):
 
         ttk.Checkbutton(
             frame,
-            text="このルールを有効にする",
+            text=translate(language, "このルールを有効にする"),
             variable=self.enabled_var,
         ).grid(row=6, column=0, sticky="w", pady=(0, 18))
 
@@ -282,13 +425,13 @@ class RuleDialog(tk.Toplevel):
         buttons.grid(row=7, column=0, sticky="e")
         office_button(
             buttons,
-            text="キャンセル",
+            text=translate(language, "キャンセル"),
             command=self.destroy,
             width=10,
         ).pack(side="left", padx=(0, 8))
         office_button(
             buttons,
-            text="保存",
+            text=translate(language, "保存"),
             command=self._accept,
             palette="primary",
             width=10,
@@ -311,8 +454,11 @@ class RuleDialog(tk.Toplevel):
                 raise ValueError
         except ValueError:
             messagebox.showerror(
-                "入力エラー",
-                "優先順位は1～999の整数で入力してください。",
+                translate(self.language, "入力エラー"),
+                translate(
+                    self.language,
+                    "優先順位は1～999の整数で入力してください。",
+                ),
                 parent=self,
             )
             return
@@ -320,8 +466,8 @@ class RuleDialog(tk.Toplevel):
         text = self.text_var.get().strip()
         if not text:
             messagebox.showerror(
-                "入力エラー",
-                "ボタン文字を入力してください。",
+                translate(self.language, "入力エラー"),
+                translate(self.language, "ボタン文字を入力してください。"),
                 parent=self,
             )
             return
@@ -329,16 +475,23 @@ class RuleDialog(tk.Toplevel):
         self.result = Rule(
             priority=priority,
             text=text,
-            match=MATCH_KEYS.get(self.match_var.get(), "prefix"),
+            match={
+                match_label(key, self.language): key for key in MATCH_LABELS
+            }.get(self.match_var.get(), "prefix"),
             enabled=self.enabled_var.get(),
         )
         self.destroy()
 
 
 class ButtonClickerApp:
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root: tk.Tk, language_override: str | None = None):
         self.root = root
         self.config = load_config()
+        self.language = (
+            language_override
+            if language_override in {"ja", "en"}
+            else ("en" if self.config.get("language") == "en" else "ja")
+        )
         self.rules = [
             Rule.from_dict(item)
             for item in self.config.get("rules", [])
@@ -371,7 +524,9 @@ class ButtonClickerApp:
         self.tracked_title_var = tk.StringVar(
             value="通常モード：最前面ウィンドウを監視"
         )
-        self.status_var = tk.StringVar(value="停止中")
+        self.status_var = tk.StringVar(
+            value=translate(self.language, "停止中")
+        )
         self.rule_list_window: tk.Toplevel | None = None
         self.rule_list_tree: ttk.Treeview | None = None
 
@@ -379,7 +534,7 @@ class ButtonClickerApp:
         self._refresh_rules()
         try:
             RUNTIME_LOG_PATH.write_text(
-                f"{APP_NAME} v{APP_VERSION}\n"
+                f"{translate(self.language, APP_NAME)} v{APP_VERSION}\n"
                 f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n",
                 encoding="utf-8",
             )
@@ -390,7 +545,9 @@ class ButtonClickerApp:
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
     def _build_ui(self) -> None:
-        self.root.title(f"{APP_NAME}  v{APP_VERSION}")
+        self.root.title(
+            f"{translate(self.language, APP_NAME)}  v{APP_VERSION}"
+        )
         self.root.geometry("920x690")
         self.root.minsize(800, 620)
         self.root.configure(background=PAPER)
@@ -527,7 +684,7 @@ class ButtonClickerApp:
         header_titles.pack(side="left", fill="x", expand=True)
         tk.Label(
             header_titles,
-            text=APP_NAME,
+            text=translate(self.language, APP_NAME),
             bg=HEAD,
             fg=INK,
             font=("Yu Gothic UI", 16, "bold"),
@@ -550,6 +707,13 @@ class ButtonClickerApp:
             pady=5,
             font=("Consolas", 9, "bold"),
         ).pack(side="right")
+        self.language_button = office_button(
+            header,
+            text="English" if self.language == "ja" else "日本語",
+            command=self._toggle_language,
+            width=10,
+        )
+        self.language_button.pack(side="right", padx=(0, 12))
         tk.Frame(self.root, bg=INK, height=3).pack(fill="x")
 
         outer = ttk.Frame(self.root, padding=(20, 12, 20, 8))
@@ -711,7 +875,7 @@ class ButtonClickerApp:
             rule_buttons,
             text="初期設定に戻す",
             command=self._restore_defaults,
-            width=14,
+            width=18 if self.language == "en" else 14,
         ).pack(side="right")
 
         columns = ("priority", "text", "match", "enabled")
@@ -722,10 +886,16 @@ class ButtonClickerApp:
             height=4,
             selectmode="browse",
         )
-        self.tree.heading("priority", text="優先順位")
-        self.tree.heading("text", text="ボタン文字")
-        self.tree.heading("match", text="照合方法")
-        self.tree.heading("enabled", text="状態")
+        self.tree.heading(
+            "priority", text=translate(self.language, "優先順位")
+        )
+        self.tree.heading(
+            "text", text=translate(self.language, "ボタン文字")
+        )
+        self.tree.heading(
+            "match", text=translate(self.language, "照合方法")
+        )
+        self.tree.heading("enabled", text=translate(self.language, "状態"))
         self.tree.column("priority", width=90, anchor="center", stretch=False)
         self.tree.column("text", width=320, anchor="w")
         self.tree.column("match", width=120, anchor="center", stretch=False)
@@ -750,7 +920,7 @@ class ButtonClickerApp:
             text="監視を開始",
             command=self._start,
             palette="primary",
-            width=12,
+            width=18 if self.language == "en" else 12,
         )
         self.start_button.pack(side="left")
         self.stop_button = office_button(
@@ -779,7 +949,10 @@ class ButtonClickerApp:
         )
         ttk.Label(
             controls,
-            text="5garashi.com設計事務所　|　Office Identity v4.6",
+            text=translate(
+                self.language,
+                "5garashi.com設計事務所　|　Office Identity v4.6",
+            ),
             style="Muted.TLabel",
         ).pack(side="right")
 
@@ -810,6 +983,86 @@ class ButtonClickerApp:
         self.log.configure(yscrollcommand=scroll.set)
         self.log.pack(side="left", fill="both", expand=True)
         scroll.pack(side="right", fill="y")
+        self._apply_language_to_widgets()
+
+    def _apply_language_to_widgets(self) -> None:
+        english_to_japanese = {
+            english: japanese for japanese, english in TRANSLATIONS.items()
+        }
+
+        def visit(widget: tk.Misc) -> None:
+            try:
+                current = str(widget.cget("text"))
+                original = english_to_japanese.get(current, current)
+                localized = translate(self.language, original)
+                if localized != current:
+                    widget.configure(text=localized)
+            except (tk.TclError, TypeError):
+                pass
+            for child in widget.winfo_children():
+                visit(child)
+
+        for child in self.root.winfo_children():
+            visit(child)
+
+    def _toggle_language(self) -> None:
+        selected_language = "en" if self.language == "ja" else "ja"
+        log_text = self.log.get("1.0", "end-1c")
+        selected_rule = self.tree.selection()
+        previous_status = self.status_var.get()
+        previous_tracked_title = self.tracked_title_var.get()
+        self.language = selected_language
+        self._close_rule_list()
+        for child in self.root.winfo_children():
+            child.destroy()
+
+        self._build_ui()
+        self._refresh_rules()
+        if selected_rule and self.tree.exists(selected_rule[0]):
+            self.tree.selection_set(selected_rule[0])
+        self.log.configure(state="normal")
+        self.log.insert("end", log_text)
+        self.log.configure(state="disabled")
+        self.log.see("end")
+
+        if self.running:
+            self.tracking_check.configure(state="disabled")
+            set_office_button_state(self.start_button, "disabled")
+            set_office_button_state(self.stop_button, "normal")
+            mode = translate(
+                self.language,
+                "検出だけ" if self.dry_run_var.get() else "自動クリック",
+            )
+            if previous_status.startswith(
+                ("追跡対象を選択中", "追跡中", "Waiting to track", "Tracking")
+            ):
+                status_prefix = (
+                    "Waiting to track"
+                    if "選択中" in previous_status
+                    or "Waiting to track" in previous_status
+                    else "Tracking"
+                ) if self.language == "en" else (
+                    "追跡対象を選択中"
+                    if "選択中" in previous_status
+                    or "Waiting to track" in previous_status
+                    else "追跡中"
+                )
+                self.status_var.set(f"{status_prefix}: {mode}")
+            else:
+                self.status_var.set(
+                    f"{'Monitoring' if self.language == 'en' else '監視中'}: {mode}"
+                )
+            self.tracked_title_var.set(
+                translate(self.language, previous_tracked_title)
+            )
+            self.status_badge.configure(bg=OK, fg=CREAM)
+        else:
+            self.status_var.set(translate(self.language, previous_status))
+            self.tracked_title_var.set(
+                translate(self.language, previous_tracked_title)
+            )
+            self.status_badge.configure(bg=STEEL, fg=CREAM)
+        self._save_current_config()
 
     def _capture_self_hwnd(self) -> None:
         try:
@@ -831,11 +1084,16 @@ class ButtonClickerApp:
             return
         if self.tracking_mode_var.get():
             self.tracked_title_var.set(
-                "未選択（監視開始後、対象アプリを最前面にしてください）"
+                translate(
+                    self.language,
+                    "未選択（監視開始後、対象アプリを最前面にしてください）",
+                )
             )
         else:
             self.tracked_title_var.set(
-                "通常モード：最前面ウィンドウを監視"
+                translate(
+                    self.language, "通常モード：最前面ウィンドウを監視"
+                )
             )
 
     def _sorted_rules(self) -> list[Rule]:
@@ -858,8 +1116,10 @@ class ButtonClickerApp:
                 values=(
                     rule.priority,
                     rule.text,
-                    MATCH_LABELS[rule.match],
-                    "有効" if rule.enabled else "無効",
+                    match_label(rule.match, self.language),
+                    translate(
+                        self.language, "有効" if rule.enabled else "無効"
+                    ),
                 ),
             )
         if selected and self.rule_list_tree.exists(selected[0]):
@@ -880,7 +1140,7 @@ class ButtonClickerApp:
             return
 
         window = tk.Toplevel(self.root)
-        window.title("登録ボタン一覧")
+        window.title(translate(self.language, "登録ボタン一覧"))
         window.geometry("760x420")
         window.minsize(680, 300)
         window.configure(background=PAPER)
@@ -901,10 +1161,10 @@ class ButtonClickerApp:
             height=12,
             selectmode="browse",
         )
-        tree.heading("priority", text="優先順位")
-        tree.heading("text", text="ボタン文字")
-        tree.heading("match", text="照合方法")
-        tree.heading("enabled", text="状態")
+        tree.heading("priority", text=translate(self.language, "優先順位"))
+        tree.heading("text", text=translate(self.language, "ボタン文字"))
+        tree.heading("match", text=translate(self.language, "照合方法"))
+        tree.heading("enabled", text=translate(self.language, "状態"))
         tree.column("priority", width=90, anchor="center", stretch=False)
         tree.column("text", width=420, anchor="w")
         tree.column("match", width=120, anchor="center", stretch=False)
@@ -919,7 +1179,7 @@ class ButtonClickerApp:
         footer.grid(row=1, column=0, columnspan=2, sticky="e", pady=(10, 0))
         office_button(
             footer,
-            text="閉じる",
+            text=translate(self.language, "閉じる"),
             command=self._close_rule_list,
             width=10,
         ).pack(side="right")
@@ -928,6 +1188,16 @@ class ButtonClickerApp:
         self._refresh_rule_list_tree()
 
     def _refresh_rules(self) -> None:
+        self.tree.heading(
+            "priority", text=translate(self.language, "優先順位")
+        )
+        self.tree.heading(
+            "text", text=translate(self.language, "ボタン文字")
+        )
+        self.tree.heading(
+            "match", text=translate(self.language, "照合方法")
+        )
+        self.tree.heading("enabled", text=translate(self.language, "状態"))
         selected = self.tree.selection()
         self.tree.delete(*self.tree.get_children())
         for index, rule in enumerate(self._sorted_rules()):
@@ -938,8 +1208,10 @@ class ButtonClickerApp:
                 values=(
                     rule.priority,
                     rule.text,
-                    MATCH_LABELS[rule.match],
-                    "有効" if rule.enabled else "無効",
+                    match_label(rule.match, self.language),
+                    translate(
+                        self.language, "有効" if rule.enabled else "無効"
+                    ),
                 ),
             )
         if selected and self.tree.exists(selected[0]):
@@ -949,14 +1221,19 @@ class ButtonClickerApp:
     def _selected_rule(self) -> tuple[int, Rule] | None:
         selected = self.tree.selection()
         if not selected:
-            messagebox.showinfo("選択してください", "対象の行を選択してください。")
+            messagebox.showinfo(
+                translate(self.language, "選択してください"),
+                translate(self.language, "対象の行を選択してください。"),
+            )
             return None
         sorted_rules = self._sorted_rules()
         index = int(selected[0])
         return index, sorted_rules[index]
 
     def _add_rule(self) -> None:
-        dialog = RuleDialog(self.root, "ボタンを追加")
+        dialog = RuleDialog(
+            self.root, "ボタンを追加", language=self.language
+        )
         self.root.wait_window(dialog)
         if dialog.result:
             self.rules.append(dialog.result)
@@ -968,7 +1245,9 @@ class ButtonClickerApp:
         if not selected:
             return
         _index, old_rule = selected
-        dialog = RuleDialog(self.root, "ボタンを編集", old_rule)
+        dialog = RuleDialog(
+            self.root, "ボタンを編集", old_rule, language=self.language
+        )
         self.root.wait_window(dialog)
         if dialog.result:
             original_index = self.rules.index(old_rule)
@@ -982,8 +1261,10 @@ class ButtonClickerApp:
             return
         _index, rule = selected
         if not messagebox.askyesno(
-            "削除の確認",
-            f"「{rule.text}」を削除しますか？",
+            translate(self.language, "削除の確認"),
+            translate(self.language, "「{text}」を削除しますか？").format(
+                text=rule.text
+            ),
         ):
             return
         self.rules.remove(rule)
@@ -992,8 +1273,11 @@ class ButtonClickerApp:
 
     def _restore_defaults(self) -> None:
         if not messagebox.askyesno(
-            "初期設定に戻す",
-            "登録ボタンを「常に許可」「一度だけ許可」に戻しますか？",
+            translate(self.language, "初期設定に戻す"),
+            translate(
+                self.language,
+                "登録ボタンを「常に許可」「一度だけ許可」に戻しますか？",
+            ),
         ):
             return
         self.rules = [
@@ -1008,26 +1292,37 @@ class ButtonClickerApp:
             cooldown = float(self.cooldown_var.get())
         except ValueError:
             messagebox.showerror(
-                "入力エラー",
-                "確認間隔とクリック後の待機は数値で入力してください。",
+                translate(self.language, "入力エラー"),
+                translate(
+                    self.language,
+                    "確認間隔とクリック後の待機は数値で入力してください。",
+                ),
             )
             return None
         if not 0.2 <= interval <= 60:
             messagebox.showerror(
-                "入力エラー",
-                "確認間隔は0.2～60秒で入力してください。",
+                translate(self.language, "入力エラー"),
+                translate(
+                    self.language,
+                    "確認間隔は0.2～60秒で入力してください。",
+                ),
             )
             return None
         if not 0.5 <= cooldown <= 600:
             messagebox.showerror(
-                "入力エラー",
-                "クリック後の待機は0.5～600秒で入力してください。",
+                translate(self.language, "入力エラー"),
+                translate(
+                    self.language,
+                    "クリック後の待機は0.5～600秒で入力してください。",
+                ),
             )
             return None
         if not any(rule.enabled and rule.text for rule in self.rules):
             messagebox.showerror(
-                "設定エラー",
-                "有効なボタンを1件以上登録してください。",
+                translate(self.language, "設定エラー"),
+                translate(
+                    self.language, "有効なボタンを1件以上登録してください。"
+                ),
             )
             return None
         return interval, cooldown
@@ -1047,6 +1342,7 @@ class ButtonClickerApp:
             "cooldown_seconds": cooldown,
             "dry_run": self.dry_run_var.get(),
             "tracking_mode": self.tracking_mode_var.get(),
+            "language": self.language,
             "rules": [
                 asdict(rule)
                 for rule in sorted(
@@ -1059,7 +1355,11 @@ class ButtonClickerApp:
         try:
             save_config(self._current_config())
         except OSError as error:
-            self._append_log(f"設定を保存できませんでした: {error}")
+            self._append_log(
+                f"Could not save settings: {error}"
+                if self.language == "en"
+                else f"設定を保存できませんでした: {error}"
+            )
 
     def _start(self) -> None:
         if self.running:
@@ -1069,17 +1369,23 @@ class ButtonClickerApp:
             return
         if os.name != "nt":
             messagebox.showerror(
-                "Windows専用",
-                "このプログラムはWindows 10／11専用です。",
+                translate(self.language, "Windows専用"),
+                translate(
+                    self.language,
+                    "このプログラムはWindows 10／11専用です。",
+                ),
             )
             return
         try:
             import uiautomation  # noqa: F401
         except ImportError:
             messagebox.showerror(
-                "必要な機能がありません",
-                "uiautomationがインストールされていません。\n"
-                "「install_and_run.bat」から起動してください。",
+                translate(self.language, "必要な機能がありません"),
+                translate(
+                    self.language,
+                    "uiautomationがインストールされていません。\n"
+                    "「install_and_run.bat」から起動してください。",
+                ),
             )
             return
 
@@ -1110,25 +1416,40 @@ class ButtonClickerApp:
         self.tracking_check.configure(state="disabled")
         set_office_button_state(self.start_button, "disabled")
         set_office_button_state(self.stop_button, "normal")
-        mode = "検出だけ" if snapshot["dry_run"] else "自動クリック"
+        mode = translate(
+            self.language,
+            "検出だけ" if snapshot["dry_run"] else "自動クリック",
+        )
         if snapshot["tracking_mode"]:
-            self.status_var.set(f"追跡対象を選択中：{mode}")
+            self.status_var.set(
+                f"{'Waiting to track' if self.language == 'en' else '追跡対象を選択中'}: {mode}"
+            )
             self.tracked_title_var.set(
-                "選択待ち：対象アプリを最前面にしてください"
+                translate(
+                    self.language,
+                    "選択待ち：対象アプリを最前面にしてください",
+                )
             )
             guidance = (
-                "監視を開始しました"
-                f"（{mode}／ウィンドウ追跡モード）。"
-                "次に対象アプリを最前面にしてください。"
+                f"Monitoring started ({mode}, window tracking). "
+                "Bring the target app to the foreground."
+                if self.language == "en"
+                else (
+                    f"監視を開始しました（{mode}／ウィンドウ追跡モード）。"
+                    "次に対象アプリを最前面にしてください。"
+                )
             )
         else:
-            self.status_var.set(f"監視中：{mode}")
+            self.status_var.set(
+                f"{'Monitoring' if self.language == 'en' else '監視中'}: {mode}"
+            )
             self.tracked_title_var.set(
-                "通常モード：最前面ウィンドウを監視"
+                translate(self.language, "通常モード：最前面ウィンドウを監視")
             )
             guidance = (
-                f"監視を開始しました（{mode}）。"
-                "対象画面を最前面にしてください。"
+                f"Monitoring started ({mode}). Bring the target window to the foreground."
+                if self.language == "en"
+                else f"監視を開始しました（{mode}）。対象画面を最前面にしてください。"
             )
         self.status_badge.configure(bg=OK, fg=CREAM)
         self._append_log(guidance)
@@ -1148,9 +1469,13 @@ class ButtonClickerApp:
         self.tracking_check.configure(state="normal")
         set_office_button_state(self.start_button, "normal")
         set_office_button_state(self.stop_button, "disabled")
-        self.status_var.set("停止中")
+        self.status_var.set(translate(self.language, "停止中"))
         self.status_badge.configure(bg=STEEL, fg=CREAM)
-        self._append_log("監視を停止しました。")
+        self._append_log(
+            "Monitoring stopped."
+            if self.language == "en"
+            else "監視を停止しました。"
+        )
 
     def _monitor(self, settings: dict[str, Any]) -> None:
         import uiautomation as auto
@@ -1218,9 +1543,16 @@ class ButtonClickerApp:
                                 self.events.put(
                                     (
                                         "log",
-                                        "追跡対象を固定しました："
-                                        f"「{tracked_title}」"
-                                        f"（HWND: 0x{tracked_hwnd:X}）",
+                                        (
+                                            f"Tracking target locked: “{tracked_title}” "
+                                            f"(HWND: 0x{tracked_hwnd:X})"
+                                            if self.language == "en"
+                                            else (
+                                                "追跡対象を固定しました："
+                                                f"「{tracked_title}」"
+                                                f"（HWND: 0x{tracked_hwnd:X}）"
+                                            )
+                                        ),
                                     )
                                 )
 
@@ -1261,15 +1593,30 @@ class ButtonClickerApp:
                         scan_started = time.monotonic()
                         if scan_number == 1:
                             window_kind = (
-                                "追跡画面"
-                                if settings["tracking_mode"]
-                                else "最前面画面"
+                                (
+                                    "tracked window"
+                                    if settings["tracking_mode"]
+                                    else "foreground window"
+                                )
+                                if self.language == "en"
+                                else (
+                                    "追跡画面"
+                                    if settings["tracking_mode"]
+                                    else "最前面画面"
+                                )
                             )
                             self.events.put(
                                 (
                                     "log",
-                                    f"解析開始：{window_kind}「{title}」"
-                                    "（ボタン以外の文字要素も対象）",
+                                    (
+                                        f"Scanning {window_kind} “{title}” "
+                                        "(including non-button text elements)."
+                                        if self.language == "en"
+                                        else (
+                                            f"解析開始：{window_kind}「{title}」"
+                                            "（ボタン以外の文字要素も対象）"
+                                        )
+                                    ),
                                 )
                             )
 
@@ -1324,8 +1671,15 @@ class ButtonClickerApp:
                             self.events.put(
                                 (
                                     "log",
-                                    f"UI解析エラー：{type(scan_error).__name__}: "
-                                    f"{scan_error}",
+                                    (
+                                        f"UI scan error: {type(scan_error).__name__}: "
+                                        f"{scan_error}"
+                                        if self.language == "en"
+                                        else (
+                                            f"UI解析エラー：{type(scan_error).__name__}: "
+                                            f"{scan_error}"
+                                        )
+                                    ),
                                 )
                             )
                             self.stop_event.wait(1.0)
@@ -1339,11 +1693,20 @@ class ButtonClickerApp:
                                 self.events.put(
                                     (
                                         "log",
-                                        f"監視動作中：解析{scan_number}回目、"
-                                        f"{scanned_count}要素"
-                                        f"（文字あり{named_count}）を"
-                                        f"{scan_elapsed:.1f}秒で確認／一致なし"
-                                        f"／画面「{title}」",
+                                        (
+                                            f"Monitoring: scan {scan_number}, checked "
+                                            f"{scanned_count} elements ({named_count} "
+                                            f"with text) in {scan_elapsed:.1f}s; no match "
+                                            f"on “{title}”."
+                                            if self.language == "en"
+                                            else (
+                                                f"監視動作中：解析{scan_number}回目、"
+                                                f"{scanned_count}要素"
+                                                f"（文字あり{named_count}）を"
+                                                f"{scan_elapsed:.1f}秒で確認／一致なし"
+                                                f"／画面「{title}」"
+                                            )
+                                        ),
                                     )
                                 )
                                 last_report_at = now
@@ -1362,10 +1725,18 @@ class ButtonClickerApp:
                                 self.events.put(
                                     (
                                         "log",
-                                        f"検出：優先度{rule.priority} "
-                                        f"「{actual_name}」"
-                                        f"（種類：{control_type}）"
-                                        f"／画面「{title}」",
+                                        (
+                                            f"Detected: priority {rule.priority}, "
+                                            f"“{actual_name}” (type: {control_type}) "
+                                            f"on “{title}”."
+                                            if self.language == "en"
+                                            else (
+                                                f"検出：優先度{rule.priority} "
+                                                f"「{actual_name}」"
+                                                f"（種類：{control_type}）"
+                                                f"／画面「{title}」"
+                                            )
+                                        ),
                                     )
                                 )
                                 last_report_signature = signature
@@ -1384,8 +1755,15 @@ class ButtonClickerApp:
                             self.events.put(
                                 (
                                     "log",
-                                    "クリック直前に最前面画面が変わったため"
-                                    "中止しました。",
+                                    (
+                                        "Cancelled because the foreground window changed "
+                                        "before clicking."
+                                        if self.language == "en"
+                                        else (
+                                            "クリック直前に最前面画面が変わったため"
+                                            "中止しました。"
+                                        )
+                                    ),
                                 )
                             )
                             continue
@@ -1403,11 +1781,21 @@ class ButtonClickerApp:
                                         self.events.put(
                                             (
                                                 "log",
-                                                "背面操作を中止："
-                                                f"「{actual_name}」はInvoke非対応です。"
-                                                "手前の別画面を誤クリックしないため、"
-                                                "座標クリックは行いません。"
-                                                f"（{type(invoke_error).__name__}）",
+                                                (
+                                                    f"Background action cancelled: "
+                                                    f"“{actual_name}” does not support "
+                                                    "Invoke. Coordinate clicking was not "
+                                                    "attempted to avoid clicking another "
+                                                    f"window. ({type(invoke_error).__name__})"
+                                                    if self.language == "en"
+                                                    else (
+                                                        "背面操作を中止："
+                                                        f"「{actual_name}」はInvoke非対応です。"
+                                                        "手前の別画面を誤クリックしないため、"
+                                                        "座標クリックは行いません。"
+                                                        f"（{type(invoke_error).__name__}）"
+                                                    )
+                                                ),
                                             )
                                         )
                                         last_report_at = now
@@ -1416,8 +1804,15 @@ class ButtonClickerApp:
                                     self.events.put(
                                         (
                                             "log",
-                                            "座標クリック直前に対象画面が"
-                                            "最前面でなくなったため中止しました。",
+                                            (
+                                                "Cancelled because the target window lost "
+                                                "the foreground before coordinate clicking."
+                                                if self.language == "en"
+                                                else (
+                                                    "座標クリック直前に対象画面が"
+                                                    "最前面でなくなったため中止しました。"
+                                                )
+                                            ),
                                         )
                                     )
                                     continue
@@ -1427,8 +1822,15 @@ class ButtonClickerApp:
                             self.events.put(
                                 (
                                     "log",
-                                    f"クリック失敗：{type(click_error).__name__}: "
-                                    f"{click_error}",
+                                    (
+                                        f"Click failed: {type(click_error).__name__}: "
+                                        f"{click_error}"
+                                        if self.language == "en"
+                                        else (
+                                            f"クリック失敗：{type(click_error).__name__}: "
+                                            f"{click_error}"
+                                        )
+                                    ),
                                 )
                             )
                             continue
@@ -1437,19 +1839,34 @@ class ButtonClickerApp:
                         self.events.put(
                             (
                                 "log",
-                                f"クリック：優先度{rule.priority} "
-                                f"「{actual_name}」"
-                                f"（種類：{control_type}）"
-                                f"／方式：{click_method}"
-                                f"／画面「{title}」",
+                                (
+                                    f"Clicked: priority {rule.priority}, "
+                                    f"“{actual_name}” (type: {control_type}, "
+                                    f"method: {click_method}) on “{title}”."
+                                    if self.language == "en"
+                                    else (
+                                        f"クリック：優先度{rule.priority} "
+                                        f"「{actual_name}」"
+                                        f"（種類：{control_type}）"
+                                        f"／方式：{click_method}"
+                                        f"／画面「{title}」"
+                                    )
+                                ),
                             )
                         )
                     except Exception as error:
                         self.events.put(
                             (
                                 "log",
-                                f"画面の確認中に一時的なエラー: "
-                                f"{type(error).__name__}: {error}",
+                                (
+                                    f"Temporary error while scanning the window: "
+                                    f"{type(error).__name__}: {error}"
+                                    if self.language == "en"
+                                    else (
+                                        f"画面の確認中に一時的なエラー: "
+                                        f"{type(error).__name__}: {error}"
+                                    )
+                                ),
                             )
                         )
                         self.stop_event.wait(max(1.0, settings["interval"]))
@@ -1465,25 +1882,51 @@ class ButtonClickerApp:
                 if event == "log":
                     self._append_log(str(payload))
                 elif event == "tracked_window":
-                    title = str(payload.get("title", "（タイトルなし）"))
+                    title = str(
+                        payload.get("title", translate(self.language, "（タイトルなし）"))
+                    )
                     self.tracked_title_var.set(title)
-                    mode = "検出だけ" if self.dry_run_var.get() else "自動クリック"
-                    self.status_var.set(f"追跡中：{mode}")
+                    mode = translate(
+                        self.language,
+                        "検出だけ" if self.dry_run_var.get() else "自動クリック",
+                    )
+                    self.status_var.set(
+                        f"{'Tracking' if self.language == 'en' else '追跡中'}: {mode}"
+                    )
                 elif event == "tracked_window_lost":
                     title = str(payload)
                     self.tracked_title_var.set(
-                        f"対象が閉じられました：{title}"
+                        (
+                            f"Target window closed: {title}"
+                            if self.language == "en"
+                            else f"対象が閉じられました：{title}"
+                        )
                     )
                     self._append_log(
-                        f"追跡対象のウィンドウが閉じられたため停止します："
-                        f"「{title}」"
+                        (
+                            f"Stopping because the tracked window was closed: "
+                            f"“{title}”."
+                            if self.language == "en"
+                            else (
+                                f"追跡対象のウィンドウが閉じられたため停止します："
+                                f"「{title}」"
+                            )
+                        )
                     )
                 elif event == "fatal":
-                    self._append_log("監視処理を継続できませんでした。")
+                    fatal_message = (
+                        "Monitoring could not continue."
+                        if self.language == "en"
+                        else "監視処理を継続できませんでした。"
+                    )
+                    self._append_log(fatal_message)
                     messagebox.showerror(
-                        "監視エラー",
-                        "監視処理を継続できませんでした。\n\n"
-                        + str(payload)[-2000:],
+                        "Monitoring error" if self.language == "en" else "監視エラー",
+                        (
+                            fatal_message
+                            + "\n\n"
+                            + str(payload)[-2000:]
+                        ),
                     )
                     self._set_stopped_state()
                 elif event == "stopped" and self.running:
@@ -1500,7 +1943,7 @@ class ButtonClickerApp:
         self.tracking_check.configure(state="normal")
         set_office_button_state(self.start_button, "normal")
         set_office_button_state(self.stop_button, "disabled")
-        self.status_var.set("停止中")
+        self.status_var.set(translate(self.language, "停止中"))
         self.status_badge.configure(bg=STEEL, fg=CREAM)
 
     def _append_log(self, message: str) -> None:
@@ -1522,9 +1965,24 @@ class ButtonClickerApp:
         self.root.destroy()
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Foreground Button Clicker / 最前面ボタン自動クリック"
+    )
+    parser.add_argument(
+        "--language",
+        choices=("ja", "en"),
+        default=None,
+        help="Startup language: ja (Japanese) or en (English).",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {APP_VERSION}",
+    )
+    args = parser.parse_args(argv)
     root = tk.Tk()
-    ButtonClickerApp(root)
+    ButtonClickerApp(root, language_override=args.language)
     root.mainloop()
     return 0
 

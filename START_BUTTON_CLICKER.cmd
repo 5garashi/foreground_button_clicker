@@ -1,4 +1,10 @@
 @echo off
+rem File: START_BUTTON_CLICKER.cmd
+rem Summary: Install dependencies and launch Foreground Button Clicker.
+rem Author: 5garashi.com設計事務所 / 5garashi.com Design Office
+rem Created: 2026-07-24
+rem License: Not specified
+rem SPDX-License-Identifier: NOASSERTION
 setlocal EnableExtensions
 title Foreground Button Clicker - Startup
 cd /d "%~dp0"
@@ -8,7 +14,7 @@ set "LOG_FILE=%~dp0startup_log.txt"
 >>"%LOG_FILE%" echo Date: %DATE% %TIME%
 >>"%LOG_FILE%" echo Folder: %CD%
 
-echo Foreground Button Clicker v1.2.0
+echo Foreground Button Clicker v1.3.0
 echo.
 
 if not exist "foreground_button_clicker.py" (
@@ -87,7 +93,7 @@ if errorlevel 1 (
 
 echo [2/2] Starting the program...
 echo.
-%PYTHON_COMMAND% %PYTHON_ARGUMENTS% foreground_button_clicker.py >>"%LOG_FILE%" 2>&1
+%PYTHON_COMMAND% %PYTHON_ARGUMENTS% foreground_button_clicker.py %* >>"%LOG_FILE%" 2>&1
 set "PROGRAM_EXIT_CODE=%ERRORLEVEL%"
 
 if not "%PROGRAM_EXIT_CODE%"=="0" (
